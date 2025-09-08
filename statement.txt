@@ -1,0 +1,43 @@
+Problem Statement
+Title: AI-Driven Risk Prediction Engine for Chronic Care Patients
+
+Background:
+
+Chronic conditions such as diabetes, obesity, and heart failure require continuous monitoring and proactive care. Despite access to vitals, lab results, and medication adherence data, predicting when a patient may deteriorate remains a major challenge. A reliable and explainable AI-driven solution could empower clinicians and care teams to intervene earlier, improve health outcomes, and reduce hospitalization risks.
+
+Your Challenge:
+Design and prototype an AI-driven Risk Prediction Engine that forecasts whether a chronic care patient is at risk of deterioration in the next 90 days. Your solution should leverage patient data (e.g., vitals, labs, medication adherence, lifestyle logs) and provide predictions in a way that is clinician-friendly, explainable, and actionable.
+
+Key Requirements:
+
+Prediction Model:
+
+Input: 30–180 days of patient data
+
+Output: Probability of deterioration within 90 days
+
+Show evaluation metrics (AUROC, AUPRC, calibration, confusion matrix)
+
+Explainability:
+
+Identify global + local factors influencing predictions
+
+Present explanations in simple, clinician-friendly terms
+
+Dashboard / Prototype:
+
+Cohort view: Display risk scores for all patients
+
+Patient detail view: Show trends, key drivers, and recommended next actions
+
+Presentation (PPT/Video):
+
+Problem framing & clinical value
+
+Data handling & feature strategy
+
+Model explanation & evaluation
+
+Dashboard demo
+
+Impact, limitations, next steps

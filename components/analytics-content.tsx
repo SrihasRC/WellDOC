@@ -15,7 +15,6 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -36,7 +35,7 @@ interface ModelInfo {
 const chartConfig = {
   importance: {
     label: "SHAP Importance",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
 } satisfies ChartConfig
 
@@ -84,11 +83,19 @@ export function AnalyticsContent() {
   // Get top 10 most important features for visualization
   const topFeatures = modelInfo.feature_importance
     .slice(0, 10)
-    .map(item => ({
-      feature: modelInfo.clinical_mapping[item.feature] || item.feature,
-      importance: item.shap_importance,
-      fill: "hsl(var(--chart-1))"
-    }))
+    .map(item => {
+      const clinicalName = modelInfo.clinical_mapping[item.feature] || item.feature
+      // Shorten long feature names for better chart display
+      const shortName = clinicalName.length > 20 
+        ? clinicalName.substring(0, 17) + "..." 
+        : clinicalName
+      return {
+        feature: shortName,
+        fullFeature: clinicalName,
+        importance: item.shap_importance,
+        fill: "var(--chart-1)"
+      }
+    })
 
   return (
     <div className="space-y-6">
@@ -152,23 +159,37 @@ export function AnalyticsContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="min-h-[400px]">
-            <BarChart data={topFeatures} layout="horizontal">
-              <CartesianGrid horizontal={false} />
-              <XAxis type="number" hide />
-              <YAxis 
-                type="category" 
+          <ChartContainer config={chartConfig} className="min-h-[500px]">
+            <BarChart data={topFeatures} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
                 dataKey="feature" 
-                width={150}
-                tickLine={false}
-                axisLine={false}
-                fontSize={12}
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                fontSize={11}
+                interval={0}
+              />
+              <YAxis 
+                label={{ value: 'SHAP Importance', angle: -90, position: 'insideLeft' }}
               />
               <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-background border border-border rounded-lg p-2 shadow-md">
+                        <p className="font-medium">{data.fullFeature}</p>
+                        <p className="text-sm text-muted-foreground">
+                          SHAP: {data.importance.toFixed(4)}
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
               />
-              <Bar dataKey="importance" radius={4} />
+              <Bar dataKey="importance" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ChartContainer>
         </CardContent>

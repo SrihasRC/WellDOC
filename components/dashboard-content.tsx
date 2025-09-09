@@ -56,19 +56,19 @@ interface ModelInfo {
 const chartConfig = {
   patients: {
     label: "Patients",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
   high: {
     label: "High Risk",
-    color: "hsl(var(--destructive))",
+    color: "var(--destructive)",
   },
   medium: {
     label: "Medium Risk", 
-    color: "hsl(var(--chart-4))",
+    color: "var(--chart-4)",
   },
   low: {
     label: "Low Risk",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
 } satisfies ChartConfig
 

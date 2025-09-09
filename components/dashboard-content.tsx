@@ -155,25 +155,11 @@ export function DashboardContent() {
           }
         })
 
-        // Get risk predictions for all patients
-        const predictions: RiskResult[] = []
-        for (const patient of patientsData.patients) {
-          try {
-            const predResponse = await fetch('http://localhost:8000/predict', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                patient_id: patient.id,
-                ...patient.clinicalData
-              })
-            })
-            const predResult = await predResponse.json()
-            predictions.push(predResult)
-          } catch (err) {
-            console.error(`Failed to get prediction for patient ${patient.id}:`, err)
-          }
+        // Load previously stored predictions from localStorage (if any)
+        const storedPredictions = localStorage.getItem('riskPredictions')
+        if (storedPredictions) {
+          setRiskPredictions(JSON.parse(storedPredictions))
         }
-        setRiskPredictions(predictions)
 
       } catch (err) {
         setError('Failed to load dashboard data')

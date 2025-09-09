@@ -126,6 +126,12 @@ export function RiskPredictionContent() {
 
       const result = await response.json()
       setPrediction(result)
+      
+      // Store prediction in localStorage for dashboard persistence
+      const existingPredictions = JSON.parse(localStorage.getItem('riskPredictions') || '[]')
+      const updatedPredictions = existingPredictions.filter((p: RiskResult) => p.patient_id !== result.patient_id)
+      updatedPredictions.push(result)
+      localStorage.setItem('riskPredictions', JSON.stringify(updatedPredictions))
     } catch (err) {
       setError('Failed to get risk prediction')
       console.error('Prediction error:', err)

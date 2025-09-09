@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, AlertTriangle, Activity, TrendingDown, TrendingUp, Calendar } from "lucide-react"
+import { Users, AlertTriangle, Activity, TrendingDown, TrendingUp, Calendar, Brain } from "lucide-react"
 import Link from "next/link"
 
 import {
@@ -88,25 +88,11 @@ export function CohortContent() {
         const patientsData = await patientsResponse.json()
         setPatients(patientsData.patients)
 
-        // Get risk predictions for all patients
-        const predictions: RiskResult[] = []
-        for (const patient of patientsData.patients) {
-          try {
-            const predResponse = await fetch('http://localhost:8000/predict', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                patient_id: patient.id,
-                ...patient.clinicalData
-              })
-            })
-            const predResult = await predResponse.json()
-            predictions.push(predResult)
-          } catch (err) {
-            console.error(`Failed to get prediction for patient ${patient.id}:`, err)
-          }
+        // Load previously stored predictions from localStorage
+        const storedPredictions = localStorage.getItem('riskPredictions')
+        if (storedPredictions) {
+          setRiskPredictions(JSON.parse(storedPredictions))
         }
-        setRiskPredictions(predictions)
 
       } catch (err) {
         setError('Failed to load cohort data')
@@ -154,6 +140,7 @@ export function CohortContent() {
 
   const highRiskCount = riskPredictions.filter(p => p.risk_assessment.risk_level === 'high').length
   const totalPatients = patients.length
+  const predictedPatients = riskPredictions.length
 
   return (
     <div className="space-y-6">
@@ -166,7 +153,7 @@ export function CohortContent() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
@@ -175,6 +162,19 @@ export function CohortContent() {
           <CardContent>
             <div className="text-2xl font-bold">{totalPatients}</div>
             <p className="text-xs text-muted-foreground">Active chronic care cohort</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Predicted</CardTitle>
+            <Activity className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{predictedPatients}</div>
+            <p className="text-xs text-muted-foreground">
+              {totalPatients > 0 ? Math.round((predictedPatients / totalPatients) * 100) : 0}% assessed
+            </p>
           </CardContent>
         </Card>
         
@@ -186,7 +186,7 @@ export function CohortContent() {
           <CardContent>
             <div className="text-2xl font-bold text-destructive">{highRiskCount}</div>
             <p className="text-xs text-muted-foreground">
-              {totalPatients > 0 ? Math.round((highRiskCount / totalPatients) * 100) : 0}% of cohort
+              {predictedPatients > 0 ? Math.round((highRiskCount / predictedPatients) * 100) : 0}% of predicted
             </p>
           </CardContent>
         </Card>
@@ -208,30 +208,31 @@ export function CohortContent() {
       </div>
 
       {/* Cohort Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient Risk Scores</CardTitle>
-          <CardDescription>
-            Real-time AI predictions for all patients, sorted by risk level
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Patient</TableHead>
-                <TableHead>Age</TableHead>
-                <TableHead>Conditions</TableHead>
-                <TableHead>Risk Score</TableHead>
-                <TableHead>Risk Level</TableHead>
-                <TableHead>Urgency</TableHead>
-                <TableHead>Confidence</TableHead>
-                <TableHead>Last Visit</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cohortData.map((patient) => (
+      {predictedPatients > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Patient Risk Scores</CardTitle>
+            <CardDescription>
+              Real-time AI predictions for assessed patients, sorted by risk level
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Age</TableHead>
+                  <TableHead>Conditions</TableHead>
+                  <TableHead>Risk Score</TableHead>
+                  <TableHead>Risk Level</TableHead>
+                  <TableHead>Urgency</TableHead>
+                  <TableHead>Confidence</TableHead>
+                  <TableHead>Last Visit</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cohortData.filter(patient => patient.prediction).map((patient) => (
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">{patient.name}</TableCell>
                   <TableCell>{patient.age}</TableCell>
@@ -281,6 +282,30 @@ export function CohortContent() {
           </Table>
         </CardContent>
       </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>No Risk Assessments Yet</CardTitle>
+            <CardDescription>
+              Start by predicting individual patient risks using the AI Risk Prediction tool
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground mb-4">
+                No patients have been assessed yet. Use the Risk Prediction page to analyze individual patients.
+              </p>
+              <Link href="/risk-prediction">
+                <Button>
+                  <Brain className="mr-2 h-4 w-4" />
+                  Start Risk Assessment
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

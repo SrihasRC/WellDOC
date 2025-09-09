@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   IconDotsVertical,
   IconLogout,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/sidebar"
 import { ProfileModal } from "@/components/profile-modal"
 import { SettingsModal } from "@/components/settings-modal"
+import { useAuth } from "@/lib/auth"
 
 export function NavUser({
   user,
@@ -38,11 +40,30 @@ export function NavUser({
     name: string
     email: string
     avatar: string
+    role?: string
+    department?: string
   }
 }) {
   const { isMobile } = useSidebar()
+  const { logout } = useAuth()
+  const router = useRouter()
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
+
+  // Get initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   return (
     <>
@@ -56,12 +77,14 @@ export function NavUser({
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">SC</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
+                    {user.role || user.email}
                   </span>
                 </div>
                 <IconDotsVertical className="ml-auto size-4" />
@@ -77,13 +100,20 @@ export function NavUser({
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">SC</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="text-muted-foreground truncate text-xs">
-                      {user.email}
+                      {user.role}
                     </span>
+                    {user.department && (
+                      <span className="text-muted-foreground truncate text-xs">
+                        {user.department}
+                      </span>
+                    )}
                   </div>
                 </div>
               </DropdownMenuLabel>
@@ -99,7 +129,7 @@ export function NavUser({
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <IconLogout />
                 Log out
               </DropdownMenuItem>

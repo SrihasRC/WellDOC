@@ -1,13 +1,13 @@
 "use client"
 
-import { TrendingUp, Activity, Clock, Zap, Brain, Target } from "lucide-react"
-import { CartesianGrid, Line, LineChart, XAxis, Bar, BarChart, YAxis, Area, AreaChart, Pie, PieChart, Cell } from "recharts"
+import { useState, useEffect } from "react"
+import { Brain, Target, BarChart3, Info } from "lucide-react"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -18,524 +18,220 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 
-// Model Performance Chart
-const modelPerformanceData = [
-  { month: "Jan", accuracy: 83 },
-  { month: "Feb", accuracy: 87 },
-  { month: "Mar", accuracy: 89 },
-  { month: "Apr", accuracy: 91 },
-  { month: "May", accuracy: 86 },
-  { month: "Jun", accuracy: 89 },
-]
-
-const modelPerformanceConfig = {
-  accuracy: {
-    label: "Accuracy %",
-    color: "var(--chart-1)",
-  },
-} satisfies ChartConfig
-
-function ModelPerformanceChart() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Prediction Accuracy Over Time</CardTitle>
-        <CardDescription>Model performance metrics by month</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={modelPerformanceConfig}>
-          <LineChart
-            accessibilityLayer
-            data={modelPerformanceData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Line
-              dataKey="accuracy"
-              type="natural"
-              stroke="var(--color-accuracy)"
-              strokeWidth={2}
-              dot={{
-                fill: "var(--color-accuracy)",
-              }}
-              activeDot={{
-                r: 6,
-              }}
-            />
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing accuracy percentage for the last 6 months
-        </div>
-      </CardFooter>
-    </Card>
-  )
+// Model info interface
+interface ModelInfo {
+  feature_importance: Array<{
+    feature: string
+    shap_importance: number
+  }>
+  clinical_mapping: Record<string, string>
+  model_performance: {
+    auroc: number
+    auprc: number
+  }
 }
 
-// Feature Importance Chart
-const featureImportanceData = [
-  { feature: "Blood Pressure", importance: 28 },
-  { feature: "Medication", importance: 24 },
-  { feature: "Glucose", importance: 22 },
-  { feature: "Lab Results", importance: 15 },
-  { feature: "Lifestyle", importance: 11 },
-]
-
-const featureImportanceConfig = {
+const chartConfig = {
   importance: {
-    label: "Importance %",
-    color: "var(--chart-2)",
+    label: "SHAP Importance",
+    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig
-
-function FeatureImportanceChart() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Feature Importance</CardTitle>
-        <CardDescription>Most impactful features in risk prediction</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={featureImportanceConfig}>
-          <BarChart
-            accessibilityLayer
-            data={featureImportanceData}
-            layout="horizontal"
-            margin={{
-              left: -20,
-            }}
-          >
-            <CartesianGrid horizontal={false} />
-            <XAxis type="number" dataKey="importance" hide />
-            <YAxis
-              dataKey="feature"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Bar dataKey="importance" fill="var(--color-importance)" radius={4} />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="leading-none text-muted-foreground">
-          Based on model feature attribution analysis
-        </div>
-      </CardFooter>
-    </Card>
-  )
-}
-
-// Risk Distribution Pie Chart
-const riskDistributionData = [
-  { risk: "Low", count: 45, fill: "var(--color-low)" },
-  { risk: "Moderate", count: 32, fill: "var(--color-moderate)" },
-  { risk: "High", count: 18, fill: "var(--color-high)" },
-  { risk: "Critical", count: 5, fill: "var(--color-critical)" },
-]
-
-const riskDistributionConfig = {
-  count: {
-    label: "Patients",
-  },
-  low: {
-    label: "Low Risk",
-    color: "var(--chart-3)",
-  },
-  moderate: {
-    label: "Moderate Risk",
-    color: "var(--chart-2)",
-  },
-  high: {
-    label: "High Risk",
-    color: "var(--chart-1)",
-  },
-  critical: {
-    label: "Critical Risk",
-    color: "var(--chart-4)",
-  },
-} satisfies ChartConfig
-
-function RiskDistributionChart() {
-  return (
-    <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Risk Distribution</CardTitle>
-        <CardDescription>Current patient risk levels</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={riskDistributionConfig}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={riskDistributionData}
-              dataKey="count"
-              nameKey="risk"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              {riskDistributionData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="leading-none text-muted-foreground">
-          Total active patients: 100
-        </div>
-      </CardFooter>
-    </Card>
-  )
-}
-
-// Patient Outcomes Area Chart
-const outcomesData = [
-  { month: "Jan", improved: 12, stable: 8, declined: 3 },
-  { month: "Feb", improved: 15, stable: 6, declined: 2 },
-  { month: "Mar", improved: 18, stable: 4, declined: 1 },
-  { month: "Apr", improved: 14, stable: 7, declined: 2 },
-  { month: "May", improved: 20, stable: 3, declined: 1 },
-  { month: "Jun", improved: 17, stable: 5, declined: 1 },
-]
-
-const outcomesConfig = {
-  improved: {
-    label: "Improved",
-    color: "var(--chart-3)",
-  },
-  stable: {
-    label: "Stable",
-    color: "var(--chart-2)",
-  },
-  declined: {
-    label: "Declined",
-    color: "var(--chart-4)",
-  },
-} satisfies ChartConfig
-
-function PatientOutcomesChart() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Patient Outcomes Timeline</CardTitle>
-        <CardDescription>Monthly patient status changes</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={outcomesConfig}>
-          <AreaChart
-            accessibilityLayer
-            data={outcomesData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <defs>
-              <linearGradient id="fillImproved" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-improved)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-improved)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillStable" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-stable)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-stable)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillDeclined" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-declined)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-declined)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <Area
-              dataKey="declined"
-              type="natural"
-              fill="url(#fillDeclined)"
-              fillOpacity={0.4}
-              stroke="var(--color-declined)"
-              stackId="a"
-            />
-            <Area
-              dataKey="stable"
-              type="natural"
-              fill="url(#fillStable)"
-              fillOpacity={0.4}
-              stroke="var(--color-stable)"
-              stackId="a"
-            />
-            <Area
-              dataKey="improved"
-              type="natural"
-              fill="url(#fillImproved)"
-              fillOpacity={0.4}
-              stroke="var(--color-improved)"
-              stackId="a"
-            />
-          </AreaChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              Patient outcomes improving <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Monthly status tracking for last 6 months
-            </div>
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
-  )
-}
-
-// Model Performance Metrics Card
-function ModelMetricsCard() {
-  const metrics = [
-    { name: 'AUROC', value: 0.87, target: 0.80, status: 'excellent' },
-    { name: 'AUPRC', value: 0.74, target: 0.70, status: 'good' },
-    { name: 'Precision', value: 0.81, target: 0.75, status: 'good' },
-    { name: 'Recall', value: 0.78, target: 0.70, status: 'good' },
-  ];
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'excellent': return 'default';
-      case 'good': return 'secondary'; 
-      case 'needs-improvement': return 'outline';
-      default: return 'destructive';
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Brain className="h-5 w-5 mr-2" />
-          Model Performance Metrics
-        </CardTitle>
-        <CardDescription>Key performance indicators for the AI model</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {metrics.map((metric, index) => (
-            <div key={metric.name}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{metric.name}</span>
-                </div>
-                <Badge variant={getStatusVariant(metric.status)}>
-                  {metric.status}
-                </Badge>
-              </div>
-              <div className="mt-2 flex items-baseline justify-between">
-                <div className="text-2xl font-bold">
-                  {metric.value.toFixed(3)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Target: {metric.target.toFixed(2)}
-                </div>
-              </div>
-              {index < metrics.length - 1 && <Separator className="mt-4" />}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// Intervention Success Rates
-function InterventionCard() {
-  const data = [
-    { intervention: 'Medication Review', success: 85, total: 100 },
-    { intervention: 'Lifestyle Coaching', success: 72, total: 95 },
-    { intervention: 'Care Coordination', success: 90, total: 110 },
-    { intervention: 'Remote Monitoring', success: 78, total: 88 },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Intervention Success Rates</CardTitle>
-        <CardDescription>Effectiveness of different intervention types</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {data.map((item) => {
-            const successRate = (item.success / item.total) * 100;
-            return (
-              <div key={item.intervention} className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{item.intervention}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      {item.success}/{item.total}
-                    </span>
-                    <Badge variant="secondary">
-                      {successRate.toFixed(1)}%
-                    </Badge>
-                  </div>
-                </div>
-                <Progress value={successRate} className="h-2" />
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 export function AnalyticsContent() {
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadModelInfo = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('http://localhost:8000/model/info')
+        const data = await response.json()
+        setModelInfo(data)
+      } catch (err) {
+        setError('Failed to load model analytics')
+        console.error('Model info loading error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadModelInfo()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Brain className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading model analytics...</span>
+      </div>
+    )
+  }
+
+  if (error || !modelInfo) {
+    return (
+      <div className="text-center text-red-500 p-8">
+        <Target className="h-12 w-12 mx-auto mb-4" />
+        <p>{error || 'No model information available'}</p>
+      </div>
+    )
+  }
+
+  // Get top 10 most important features for visualization
+  const topFeatures = modelInfo.feature_importance
+    .slice(0, 10)
+    .map(item => ({
+      feature: modelInfo.clinical_mapping[item.feature] || item.feature,
+      importance: item.shap_importance,
+      fill: "hsl(var(--chart-1))"
+    }))
+
   return (
-    <>
-      {/* Key Metrics Cards */}
-      <div className="grid auto-rows-min gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Model Accuracy</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">87.2%</div>
-            <p className="text-xs text-muted-foreground">↑ 2.1% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Early Interventions</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Prevented Hospitalizations</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">Estimated based on interventions</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1.2s</div>
-            <p className="text-xs text-muted-foreground">Prediction latency</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Model Analytics</h1>
+        <p className="text-muted-foreground">
+          XGBoost model performance metrics and feature importance analysis
+        </p>
       </div>
 
-      {/* Charts Grid */}
+      {/* Model Performance Metrics */}
       <div className="grid gap-4 md:grid-cols-2">
-        <ModelMetricsCard />
-        <RiskDistributionChart />
-        <ModelPerformanceChart />
-        <FeatureImportanceChart />
-        <InterventionCard />
-        <PatientOutcomesChart />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">AUROC Score</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(modelInfo.model_performance.auroc * 100).toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Area Under ROC Curve - Excellent discriminative ability
+            </p>
+            <div className="mt-2">
+              <Badge variant={modelInfo.model_performance.auroc > 0.9 ? "default" : "secondary"}>
+                {modelInfo.model_performance.auroc > 0.9 ? "Excellent" : "Good"} Performance
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">AUPRC Score</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(modelInfo.model_performance.auprc * 100).toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Area Under Precision-Recall Curve - Handles class imbalance well
+            </p>
+            <div className="mt-2">
+              <Badge variant={modelInfo.model_performance.auprc > 0.9 ? "default" : "secondary"}>
+                {modelInfo.model_performance.auprc > 0.9 ? "Excellent" : "Good"} Precision
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Clinical Impact Summary */}
+      {/* Feature Importance Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Clinical Impact Summary</CardTitle>
-          <CardDescription>Overall impact of the AI risk prediction system</CardDescription>
+          <CardTitle>Top 10 Most Important Features</CardTitle>
+          <CardDescription>
+            SHAP values showing which clinical factors most influence risk predictions
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg border p-6 text-center">
-              <div className="text-3xl font-bold mb-2">94%</div>
-              <p className="text-sm text-muted-foreground">High-risk patients identified early</p>
+          <ChartContainer config={chartConfig} className="min-h-[400px]">
+            <BarChart data={topFeatures} layout="horizontal">
+              <CartesianGrid horizontal={false} />
+              <XAxis type="number" hide />
+              <YAxis 
+                type="category" 
+                dataKey="feature" 
+                width={150}
+                tickLine={false}
+                axisLine={false}
+                fontSize={12}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Bar dataKey="importance" radius={4} />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Model Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Model Information</CardTitle>
+          <CardDescription>Technical details about the AI risk prediction model</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <h4 className="font-medium mb-2">Model Type</h4>
+              <p className="text-sm text-muted-foreground">XGBoost Classifier</p>
             </div>
-            <div className="rounded-lg border p-6 text-center">
-              <div className="text-3xl font-bold mb-2">76%</div>
-              <p className="text-sm text-muted-foreground">Successful intervention rate</p>
+            <div>
+              <h4 className="font-medium mb-2">Prediction Window</h4>
+              <p className="text-sm text-muted-foreground">90-day deterioration risk</p>
             </div>
-            <div className="rounded-lg border p-6 text-center">
-              <div className="text-3xl font-bold mb-2">$125K</div>
-              <p className="text-sm text-muted-foreground">Estimated cost savings this quarter</p>
+            <div>
+              <h4 className="font-medium mb-2">Input Features</h4>
+              <p className="text-sm text-muted-foreground">{modelInfo.feature_importance.length} clinical variables</p>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">Training Data</h4>
+              <p className="text-sm text-muted-foreground">Synthetic chronic care patient cohort</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h4 className="font-medium mb-3">Key Clinical Predictors</h4>
+            <div className="grid gap-2 md:grid-cols-2">
+              {modelInfo.feature_importance.slice(0, 6).map((item) => (
+                <div key={item.feature} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                  <span className="text-sm">
+                    {modelInfo.clinical_mapping[item.feature] || item.feature}
+                  </span>
+                  <Badge variant="outline" className="text-xs">
+                    {item.shap_importance.toFixed(3)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-800 dark:text-blue-200">Model Interpretation</p>
+                <p className="text-blue-700 dark:text-blue-300 mt-1">
+                  Higher SHAP importance values indicate features that have more influence on the model&apos;s 
+                  predictions. The most important factors are medication count, comorbidity count, and patient age.
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   )
 }

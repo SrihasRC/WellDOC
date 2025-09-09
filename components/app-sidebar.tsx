@@ -6,7 +6,6 @@ import {
   IconChartBar,
   IconDashboard,
   IconUsers,
-  IconFileDescription,
   IconStethoscope,
   IconBrain,
 } from "@tabler/icons-react"
@@ -31,22 +30,17 @@ const navItems = [
     icon: IconDashboard,
   },
   {
-    title: "Risk Prediction",
+    title: "Risk Prediction", 
     url: "/risk-prediction",
     icon: IconBrain,
   },
   {
-    title: "Patients",
-    url: "/patients", 
-    icon: IconFileDescription,
-  },
-  {
-    title: "Cohort Management",
+    title: "Cohort View",
     url: "/cohort",
     icon: IconUsers,
   },
   {
-    title: "Analytics",
+    title: "Model Analytics",
     url: "/analytics",
     icon: IconChartBar,
   },

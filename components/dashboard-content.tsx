@@ -292,13 +292,13 @@ export function DashboardContent() {
             <Link href="/cohort">
               <Button variant="outline" className="w-full" size="lg">
                 <Users className="mr-2 h-4 w-4" />
-                Cohort Management
+                Cohort View
               </Button>
             </Link>
             <Link href="/analytics">
               <Button variant="outline" className="w-full" size="lg">
                 <BarChart3 className="mr-2 h-4 w-4" />
-                Advanced Analytics
+                Model Analytics
               </Button>
             </Link>
           </CardContent>

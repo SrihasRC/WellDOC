@@ -97,6 +97,19 @@
   --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 4px 6px -1px hsl(0 0% 0% / 0.17);
   --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
+  
+  /* Enhanced UI Variables */
+  --success: oklch(0.7147 0.1427 142.4953);
+  --success-foreground: oklch(0.2046 0 0);
+  --warning: oklch(0.7686 0.1647 70.0804);
+  --warning-foreground: oklch(0.2046 0 0);
+  --info: oklch(0.6231 0.1880 259.8145);
+  --info-foreground: oklch(0.9911 0 0);
+  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--chart-5) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--muted) 100%);
+  --glow: 0 0 20px var(--primary);
+  --transition-fast: all 0.15s ease-in-out;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {

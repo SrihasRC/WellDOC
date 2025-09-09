@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Brain, Users, AlertTriangle, CheckCircle, Activity, TrendingUp } from "lucide-react"
+import { Brain, Users, AlertTriangle, CheckCircle, Activity, TrendingUp, Search, Filter, User, Calendar, Heart } from "lucide-react"
 
 import {
   Card,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -83,6 +84,12 @@ export function RiskPredictionContent() {
   const [prediction, setPrediction] = useState<RiskResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // New state for improved patient selection
+  const [searchQuery, setSearchQuery] = useState("")
+  const [ageFilter, setAgeFilter] = useState("all")
+  const [conditionFilter, setConditionFilter] = useState("all")
+  const [insuranceFilter, setInsuranceFilter] = useState("all")
 
   // Load patients on component mount
   useEffect(() => {
@@ -99,6 +106,55 @@ export function RiskPredictionContent() {
 
     loadPatients()
   }, [])
+
+  // Helper function to get insurance type
+  const getInsuranceType = (patient: PatientData) => {
+    const clinical = patient.clinicalData
+    if (clinical.insurance_medicaid === 1) return 'medicaid'
+    if (clinical.insurance_medicare === 1) return 'medicare'
+    if (clinical.insurance_private === 1) return 'private'
+    return 'unknown'
+  }
+
+  // Helper function to get age group
+  const getAgeGroup = (age: number) => {
+    if (age <= 30) return 'young'
+    if (age <= 50) return 'middle'
+    if (age <= 70) return 'senior'
+    return 'elderly'
+  }
+
+  // Helper function to get risk level based on condition count
+  const getPatientRiskLevel = (conditions: string[]) => {
+    if (conditions.length <= 1) return 'low'
+    if (conditions.length <= 3) return 'medium'
+    return 'high'
+  }
+
+  // Filter patients based on search and filters
+  const filteredPatients = patients.filter(patient => {
+    // Search filter
+    const matchesSearch = searchQuery === "" || 
+      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      patient.conditions.some(condition => 
+        condition.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+
+    // Age filter
+    const matchesAge = ageFilter === "all" || getAgeGroup(patient.age) === ageFilter
+
+    // Condition filter
+    const matchesCondition = conditionFilter === "all" || 
+      patient.conditions.some(condition => 
+        condition.toLowerCase() === conditionFilter.toLowerCase()
+      )
+
+    // Insurance filter
+    const matchesInsurance = insuranceFilter === "all" || 
+      getInsuranceType(patient) === insuranceFilter
+
+    return matchesSearch && matchesAge && matchesCondition && matchesInsurance
+  })
 
   const handlePredictRisk = async () => {
     if (!selectedPatientId) return
@@ -160,35 +216,178 @@ export function RiskPredictionContent() {
             Select Patient
           </CardTitle>
           <CardDescription>
-            Choose a patient from the chronic care cohort for risk assessment
+            Browse and search through {patients.length} patients in the chronic care cohort
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient-select">Patient</Label>
-            <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a patient..." />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.name} - {patient.age}y - {patient.conditions.join(', ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-6">
+          {/* Search and Filters */}
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="search">Search Patients</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Search by name or condition..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label>Age Group</Label>
+                <Select value={ageFilter} onValueChange={setAgeFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ages</SelectItem>
+                    <SelectItem value="young">≤30 years</SelectItem>
+                    <SelectItem value="middle">31-50 years</SelectItem>
+                    <SelectItem value="senior">51-70 years</SelectItem>
+                    <SelectItem value="elderly">71+ years</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Condition</Label>
+                <Select value={conditionFilter} onValueChange={setConditionFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Conditions</SelectItem>
+                    <SelectItem value="diabetes">Diabetes</SelectItem>
+                    <SelectItem value="hypertension">Hypertension</SelectItem>
+                    <SelectItem value="heart disease">Heart Disease</SelectItem>
+                    <SelectItem value="copd">COPD</SelectItem>
+                    <SelectItem value="kidney disease">Kidney Disease</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Insurance</Label>
+                <Select value={insuranceFilter} onValueChange={setInsuranceFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Insurance</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                    <SelectItem value="medicare">Medicare</SelectItem>
+                    <SelectItem value="medicaid">Medicaid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Patient Grid */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Patients ({filteredPatients.length})</Label>
+              {searchQuery || ageFilter !== "all" || conditionFilter !== "all" || insuranceFilter !== "all" ? (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("")
+                    setAgeFilter("all")
+                    setConditionFilter("all")
+                    setInsuranceFilter("all")
+                  }}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Clear Filters
+                </Button>
+              ) : null}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+              {filteredPatients.map((patient) => (
+                <Card 
+                  key={patient.id} 
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    selectedPatientId === patient.id 
+                      ? 'ring-2 ring-primary border-primary' 
+                      : 'hover:border-primary/50'
+                  }`}
+                  onClick={() => setSelectedPatientId(patient.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{patient.name}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {getPatientRiskLevel(patient.conditions) === 'high' ? '🔴' : 
+                           getPatientRiskLevel(patient.conditions) === 'medium' ? '🟡' : '🟢'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3 w-3" />
+                          {patient.age} years • {patient.gender}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Heart className="h-3 w-3" />
+                          {patient.conditions.length} condition{patient.conditions.length !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-1">
+                        {patient.conditions.slice(0, 2).map((condition, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {condition}
+                          </Badge>
+                        ))}
+                        {patient.conditions.length > 2 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{patient.conditions.length - 2} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {filteredPatients.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No patients match your search criteria</p>
+                <p className="text-sm">Try adjusting your filters</p>
+              </div>
+            )}
           </div>
 
           {selectedPatient && (
             <div className="p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium mb-2">Patient Information</h4>
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Selected Patient
+              </h4>
               <div className="grid gap-2 text-sm">
                 <div><strong>Name:</strong> {selectedPatient.name}</div>
                 <div><strong>Age:</strong> {selectedPatient.age} years</div>
                 <div><strong>Gender:</strong> {selectedPatient.gender}</div>
                 <div><strong>Conditions:</strong> {selectedPatient.conditions.join(', ')}</div>
                 <div><strong>Last Visit:</strong> {new Date(selectedPatient.lastVisit).toLocaleDateString()}</div>
+                <div><strong>Insurance:</strong> {
+                  getInsuranceType(selectedPatient).charAt(0).toUpperCase() + 
+                  getInsuranceType(selectedPatient).slice(1)
+                }</div>
               </div>
             </div>
           )}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Brain, Target, BarChart3, Info } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { getApiUrl, DEFAULT_HEADERS } from "@/lib/api-config"
+import { getApiUrl } from "@/lib/api-config"
 
 import {
   Card,

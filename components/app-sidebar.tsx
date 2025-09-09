@@ -70,11 +70,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-3 hover:bg-gradient-to-r transition-all duration-300"
             >
-              <Link href="/">
-                <IconStethoscope className="!size-5" />
-                <span className="text-base font-semibold">WellDoc</span>
+              <Link href="/" className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br shadow-lg">
+                  <IconStethoscope className="!size-5 text-white drop-shadow-sm" />
+                </div>
+                <span className="text-lg font-bold bg-gradient-to-r from-white via-gray-100 to-gray-200 bg-clip-text text-transparent drop-shadow-sm tracking-wide">
+                  WellDOC
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -144,7 +144,7 @@ export function DashboardContent() {
         setPatients(patientsData.patients)
 
         // Get model info from backend
-        const modelResponse = await fetch('http://localhost:8000/model/info')
+        const modelResponse = await fetch('https://welldoc-backend.onrender.com/model/info')
         const modelData = await modelResponse.json()
         setModelInfo({
           model_name: 'XGBoost Risk Predictor',
